@@ -18,8 +18,12 @@ import os
 import signal
 from nats.aio.client import Client as NATS
 
+import time
+
 from pb2 import event_pb2
 from pb2 import execution_pb2
+
+import psycopg2
 
 def show_usage():
     usage = """
@@ -58,6 +62,9 @@ async def run(loop):
 
     async def subscribe_handler(msg):
 
+        conn = psycopg2.connect(host="172.17.0.1", database="st-chat", port=5432, user="st-chat", password="1qaz2wsx")
+        cursor = conn.cursor()
+
         if args.subject == "sport_event":
             deser_msg = event_pb2.event()
             deser_msg.ParseFromString(msg.data)
@@ -68,6 +75,9 @@ async def run(loop):
 
             print("Message: {sport} | {match_title} | {data_event}".format(
                 sport=sport, match_title=match_title, data_event=data_event))
+            
+            INSERT = '''INSERT INTO sport_event (timestamp, sport, match_title, data_event) VALUES (%s, %s, %s, %s);'''
+            cursor.execute(INSERT, (str(int(time.time())), sport, match_title, data_event))
 
         if args.subject == "execution":
             deser_msg = execution_pb2.execution()
@@ -77,11 +87,14 @@ async def run(loop):
                 symbol=deser_msg.symbol, market=deser_msg.market, price=deser_msg.price,
                 quantity=deser_msg.quantity, executionEpoch=deser_msg.executionEpoch, 
                 stateSymbol=deser_msg.stateSymbol))
-#        subject = msg.subject
-#        reply = msg.reply
-#        data = msg.data.decode()
-#        print("Received a message on '{subject} {reply}': {data}".format(
-#          subject=subject, reply=reply, data=data))
+
+            INSERT = '''INSERT INTO sport_event (timestamp, symbol, market, price, executionEpoch, stateSymbol) VALUES (%s, %s, %s, %s, %s, %s);'''
+            cursor.execute(INSERT, (str(int(time.time())), deser_msg.symbol, deser_msg.market, deser_msg.price,
+                deser_msg.quantity, deser_msg.executionEpoch, deser_msg.stateSymbol))
+
+        conn.commit()
+        cursor.close()
+        conn.close()        
 
     options = {
         "loop": loop,
