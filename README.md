@@ -6,7 +6,8 @@ The goals of this application are below:
 1. You will find the feeds, NATS broker, and protobuf specs here: https://bitbucket.org/will-sumfest/edge-swe-challenge/src/master/
 
 ## Requirements
-* python 3.6+ 
+* python 3.7+ 
+* pip 20.3.3+
 * docker 1.13.1+
 * docker-compose 1.22.0+
  
@@ -18,13 +19,22 @@ The installation commands below assume the procedure is taking place on a linux 
 git@github.com:thoreaudesign/st-chat.git
 
 # Launch containers, including NATS broker and feeds
+cd st-chat 
 docker-compose up -d
+
+# Install python dependencies using virtualenv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Running nats-sub
 The nats-sub script subscribes to the NATS broker, parses the messages (protobufs) sent by the two preconfigured subscribers, then stores each message in persistent storage. 
 
 ```
+# The IP 172.17.0.1 is the gateway IP address of the docker network. This IP should be standard across docker installations. 
+# If that IP does not work, use `docker inspect network st-chat_internal` to obtain the IP address assigned to the NATS broker container.  
+
 python3 natssub sport_event -s nats://172.17.0.1:4222
 python3 natssub execution -s nats://172.17.0.1:4222
 ```
