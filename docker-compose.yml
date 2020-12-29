@@ -24,6 +24,28 @@ services:
       internal:
         aliases:
           - host.docker.internal
+  postgres:
+    image: postgres:13.1-alpine
+    container_name: postgres
+    ports:
+     - 5432:5432
+    networks:
+      internal:
+        aliases:
+          - pg.docker.internal
+    depends_on:
+      - nats
+    volumes:
+      - pg_data:/var/lib/postgresql/data/pg_data
+    environment:
+      POSTGRES_PASSWORD: 1qaz2wsx
+      POSTGRES_DB: st-chat
+      POSTGRES_USER: st-chat
+      POSTGRES_HOST: pg.docker.internal
+      POSTGRES_PORT: 5432
+      PGDATA: /var/lib/postgresql/data/pg_data
 networks:
   internal:
     driver: bridge
+volumes:
+  pg_data:
