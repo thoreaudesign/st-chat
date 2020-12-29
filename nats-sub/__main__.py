@@ -88,9 +88,9 @@ async def run(loop):
                 quantity=deser_msg.quantity, executionEpoch=deser_msg.executionEpoch, 
                 stateSymbol=deser_msg.stateSymbol))
 
-            INSERT = '''INSERT INTO sport_event (timestamp, symbol, market, price, executionEpoch, stateSymbol) VALUES (%s, %s, %s, %s, %s, %s);'''
-            cursor.execute(INSERT, (str(int(time.time())), deser_msg.symbol, deser_msg.market, deser_msg.price,
-                deser_msg.quantity, deser_msg.executionEpoch, deser_msg.stateSymbol))
+            INSERT = '''INSERT INTO execution (timestamp, symbol, market, price, quantity, executionEpoch, stateSymbol) VALUES (%s, %s, %s, %s, %s, %s, %s);'''
+            cursor.execute(INSERT, (str(int(time.time())), deser_msg.symbol, deser_msg.market, str(deser_msg.price),
+                str(deser_msg.quantity), str(deser_msg.executionEpoch), deser_msg.stateSymbol))
 
         conn.commit()
         cursor.close()
