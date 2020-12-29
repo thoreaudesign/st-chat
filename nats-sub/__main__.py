@@ -18,6 +18,9 @@ import os
 import signal
 from nats.aio.client import Client as NATS
 
+from pb2 import event_pb2
+from pb2 import execution_pb2
+
 def show_usage():
     usage = """
 nats-sub SUBJECT [-s SERVER] [-q QUEUE]
@@ -54,11 +57,31 @@ async def run(loop):
         print(f"Connected to NATS at {nc.connected_url.netloc}...")
 
     async def subscribe_handler(msg):
-        subject = msg.subject
-        reply = msg.reply
-        data = msg.data.decode()
-        print("Received a message on '{subject} {reply}': {data}".format(
-          subject=subject, reply=reply, data=data))
+
+        if args.subject == "sport_event":
+            deser_msg = event_pb2.event()
+            deser_msg.ParseFromString(msg.data)
+
+            sport = event_pb2.sport.Name(deser_msg.sport)
+            match_title = deser_msg.match_title
+            data_event = deser_msg.data_event
+
+            print("Message: {sport} | {match_title} | {data_event}".format(
+                sport=sport, match_title=match_title, data_event=data_event))
+
+        if args.subject == "execution":
+            deser_msg = execution_pb2.execution()
+            deser_msg.ParseFromString(msg.data)
+
+            print("Message: {symbol} | {market} | {price} | {quantity} | {executionEpoch} | {stateSymbol}".format(
+                symbol=deser_msg.symbol, market=deser_msg.market, price=deser_msg.price,
+                quantity=deser_msg.quantity, executionEpoch=deser_msg.executionEpoch, 
+                stateSymbol=deser_msg.stateSymbol))
+#        subject = msg.subject
+#        reply = msg.reply
+#        data = msg.data.decode()
+#        print("Received a message on '{subject} {reply}': {data}".format(
+#          subject=subject, reply=reply, data=data))
 
     options = {
         "loop": loop,
