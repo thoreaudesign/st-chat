@@ -25,6 +25,9 @@ services:
         aliases:
           - host.docker.internal
   postgres:
+    build:
+      context: ./
+      dockerfile: postgres/Dockerfile     
     image: postgres:13.1-alpine
     container_name: postgres
     ports:
