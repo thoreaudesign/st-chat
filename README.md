@@ -16,7 +16,7 @@ The installation commands below assume the procedure is taking place on a linux 
 
 ```
 # Clone repository
-git@github.com:thoreaudesign/st-chat.git
+git clone git@github.com:thoreaudesign/st-chat.git
 
 # Launch containers, including NATS broker and feeds
 cd st-chat 
