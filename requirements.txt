@@ -1,3 +1,6 @@
 protobuf==3.12.2
 asyncio-nats-client
 psycopg2-binary
+Twisted
+autobahn[twisted]
+autobahn[asyncio]
