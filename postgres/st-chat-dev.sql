@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS execution
     symbol varchar(255),
     market varchar(64),
     price varchar(32),
+    quantity varchar(32),
     executionEpoch varchar(16),
     stateSymbol varchar(2)
 );

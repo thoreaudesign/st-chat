@@ -29,6 +29,7 @@ CREATE TABLE public.execution (
     symbol character varying(255),
     market character varying(64),
     price character varying(32),
+    quantity character varying(32),
     executionepoch character varying(16),
     statesymbol character varying(2)
 );
