@@ -35,6 +35,6 @@ The nats-sub script subscribes to the NATS broker, parses the messages (protobuf
 # The IP 172.17.0.1 is the gateway IP address of the docker network. This IP should be standard across docker installations. 
 # If that IP does not work, use `docker inspect network st-chat_internal` to obtain the IP address assigned to the NATS broker container.  
 
-python3 natssub sport_event -s nats://172.17.0.1:4222
-python3 natssub execution -s nats://172.17.0.1:4222
+python3 nats-sub sport_event -s nats://172.17.0.1:4222
+python3 nats-sub execution -s nats://172.17.0.1:4222
 ```
