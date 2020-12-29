@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  executions:
+    image: wsumfest/execution-feed:v1
+    container_name: executions
+    networks:
+      - internal
+    depends_on:
+      - nats
+  sports:
+    image: wsumfest/sport-feed:v1
+    container_name: sports
+    networks:
+      - internal
+    depends_on:
+      - nats
+  nats:
+    image: nats:latest
+    container_name: nats
+    ports:
+      - 4222:4222
+    networks:
+      internal:
+        aliases:
+          - host.docker.internal
+networks:
+  internal:
+    driver: bridge
