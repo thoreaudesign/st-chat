@@ -39,6 +39,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.chat_log (
     "timestamp" character varying(16),
+    username character varying(16),
     action public.action,
     message text
 );
