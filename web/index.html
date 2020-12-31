@@ -66,10 +66,10 @@
                             $("#chatbox").prepend($("<div/>").text("New user joined!"));
                             break;
                         case 'message':
-                            $("#chatbox").prepend($("<div/>").text("User exited..."));
+                            $("#chatbox").prepend($("<div/>").text(data.message));
                             break;
                         case 'exit':
-                            $("#chatbox").prepend($("<div/>").text(data.message));
+                            $("#chatbox").prepend($("<div/>").text("User exited..."));
                             break;
                         default:
                             console.error(
