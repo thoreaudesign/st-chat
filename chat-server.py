@@ -4,99 +4,92 @@ import asyncio
 import json
 import websockets
 
-from enum import Enum
-
 from lib.PostgresManager import PostgresManager
 from lib.ConfigManager import ConfigManager
 
 import time
 
+# Enum emulation. 
+# True Enum type doesn't support string values by default.
 ACTION_JOIN = "join"
 ACTION_MESSAGE = "message"
 ACTION_EXIT = "exit"
 
+# Initialize config and database managers.
 cm = ConfigManager()
-
-#try:
 db = PostgresManager(cm)
-#except Exception as e:
-#    print(e)
 
+# Initialize set to track websocket connections, "users"
 USERS = set()
 
+# Configuration file management
+def get_config():
+    section = "Websocket"
+    if section in cm.parser.sections():
+        return cm.parser[section]
+
+
+# Return epoch timestamp as string. 
 def get_epoch_str():
     return str(int(time.time()))
 
-def user_join_msg():
-    return json.dumps({"action": ACTION_JOIN})
+def notification_payload(action):
+    return json.dumps({"action": action})
 
-def user_exit_msg():
-    return json.dumps({"action": ACTION_EXIT})
-
-async def distribute_message(message):
-    if USERS:  
-        username = message.split(':')[0]
-        new_message = json.dumps({"action": ACTION_MESSAGE, "message": message})
-        try:
-            db.insert_chat((get_epoch_str(), username, ACTION_MESSAGE, message))
-        except Exception as e:
-            print(e)
-        print(message)
-        await asyncio.wait([user.send(new_message) for user in USERS])
-
-async def notify_user_exit():
+# Write chat data to Postgres database. 
+def log_message(attr_list):
+    try:
+        db.insert_chat(attr_list)
+    except Exception as e:
+        print(e)
+    
+# Distributes messages to all connected users. 
+# No action if there are no connected users. 
+async def notify_users(action, message):
     if USERS:
-        message = user_exit_msg()
-        await asyncio.wait([user.send(message) for user in USERS])
+        payload = None
+        if action is ACTION_MESSAGE:
+            username = message.split(':')[0]
+            payload = json.dumps({"action": ACTION_MESSAGE, "message": message})
+            print(message)
+            log_message((get_epoch_str(), username, ACTION_MESSAGE, message))
+        else:
+            payload = notification_payload(action)
+        
+        await asyncio.wait([user.send(payload) for user in USERS])
 
-async def notify_user_join():
-    if USERS:  
-        message = user_join_msg()
-        await asyncio.wait([user.send(message) for user in USERS])
-
-async def register(websocket):
-    username = ACTION_JOIN
-    message = "New user joined chat."
+# Handles connection and disconnection of users. 
+async def user_change(websocket, action, message):
+    username = action
     USERS.add(websocket)
-    try:
-        db.insert_chat((get_epoch_str(), username, ACTION_JOIN, message))
-    except Exception as e:
-        print(e)
     print(message)
-    await notify_user_join()
-async def unregister(websocket):
-    username = ACTION_EXIT
-    message = "User exited..."
-    USERS.remove(websocket)
-    try:
-        db.insert_chat((get_epoch_str(), username, ACTION_EXIT, message))
-    except Exception as e:
-        print(e)
-    print(message)
-    await notify_user_exit()
+    log_message((get_epoch_str(), username, action, message))
+    await notify_users(action, message)
 
+# "Main" function to run in event loop. 
+# Handles user management and message distribution. 
 async def chat(websocket, path):
-    await register(websocket)
+    await user_change(websocket, ACTION_JOIN, "New user joined chat.")
     try:
         async for message in websocket:
             data = json.loads(message)
             if data["message"] is not None:
-                await distribute_message(data["message"])
+                await notify_users(ACTION_MESSAGE, data["message"])
             else:
                 print("Unsupported event: {data}".format(data=data))
     finally:
-        await unregister(websocket)
+        await user_change(websocket, ACTION_EXIT, "User exited...")
 
-section = "Websocket"
-config = None
-if section in cm.parser.sections():
-    config = cm.parser[section]
-
+# Initialize config values from config.ini
+config = get_config()
 host = config['host']
 port = config['port']
 
+# Configure chat function as entrypoint for websocket and start server.
+# Set host and port from config.ini. 
 start_server = websockets.serve(chat, host, port)
 print("ST-Chat websocket server started at {host}:{port}.".format(host=host, port=port))
 
+# Set event loop to monitor websocket and re-run chat function infinitely.
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
