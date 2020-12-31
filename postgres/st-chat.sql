@@ -50,23 +50,6 @@ CREATE TABLE public.sport_event (
 
 
 ALTER TABLE public.sport_event OWNER TO "st-chat";
-
---
--- Data for Name: execution; Type: TABLE DATA; Schema: public; Owner: st-chat
---
-
-COPY public.execution ("timestamp", symbol, market, price, executionepoch, statesymbol) FROM stdin;
-\.
-
-
---
--- Data for Name: sport_event; Type: TABLE DATA; Schema: public; Owner: st-chat
---
-
-COPY public.sport_event ("timestamp", sport, match_title, data_event) FROM stdin;
-\.
-
-
 --
 -- PostgreSQL database dump complete
 --
