@@ -16,9 +16,36 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: action; Type: TYPE; Schema: public; Owner: st-chat
+--
+
+CREATE TYPE public.action AS ENUM (
+    'join',
+    'message',
+    'exit'
+);
+
+
+ALTER TYPE public.action OWNER TO "st-chat";
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: chat_log; Type: TABLE; Schema: public; Owner: st-chat
+--
+
+CREATE TABLE public.chat_log (
+    "timestamp" character varying(16),
+    username character varying(16),
+    action public.action,
+    message text
+);
+
+
+ALTER TABLE public.chat_log OWNER TO "st-chat";
 
 --
 -- Name: execution; Type: TABLE; Schema: public; Owner: st-chat
@@ -50,22 +77,6 @@ CREATE TABLE public.sport_event (
 
 
 ALTER TABLE public.sport_event OWNER TO "st-chat";
-
---
--- Data for Name: execution; Type: TABLE DATA; Schema: public; Owner: st-chat
---
-
-COPY public.execution ("timestamp", symbol, market, price, executionepoch, statesymbol) FROM stdin;
-\.
-
-
---
--- Data for Name: sport_event; Type: TABLE DATA; Schema: public; Owner: st-chat
---
-
-COPY public.sport_event ("timestamp", sport, match_title, data_event) FROM stdin;
-\.
-
 
 --
 -- PostgreSQL database dump complete
