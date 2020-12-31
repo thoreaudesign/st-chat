@@ -49,7 +49,6 @@ class PostgresManager(object):
             raise
 
     # Check connection and handle retries. 
-    # Check connection and handle retries. 
     def check_connection(self):
         if self.conn is None or self.cursor is None:
             print("No database connection... attempting to connect.")
