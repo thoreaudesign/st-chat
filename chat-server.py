@@ -42,7 +42,7 @@ def notification_payload(action):
 # Write chat data to Postgres database. 
 def log_message(attr_list):
     try:
-        db.insert_chat(attr_list)
+        db.insert(PostgresManager.INSERT_CHAT, attr_list)
     except Exception as e:
         print(e)
     
@@ -61,10 +61,18 @@ async def notify_users(action, message):
         
         await asyncio.wait([user.send(payload) for user in USERS])
 
+# Adds or removes websocket from "users" set
+def toggle_connection(action, websocket):
+    if action is ACTION_JOIN:
+        USERS.add(websocket)
+
+    if action is ACTION_EXIT:
+        USERS.remove(websocket)
+
 # Handles connection and disconnection of users. 
 async def user_change(websocket, action, message):
     username = action
-    USERS.add(websocket)
+    toggle_connection(action, websocket)
     print(message)
     log_message((get_epoch_str(), username, action, message))
     await notify_users(action, message)

@@ -23,7 +23,17 @@ import time
 from pb2 import event_pb2
 from pb2 import execution_pb2
 
+from lib.ConfigManager import ConfigManager
+from lib.PostgresManager import PostgresManager
+
 import psycopg2
+
+# Initialize config and database managers.
+cm = ConfigManager()
+try:
+    db = PostgresManager(cm)
+except Exception as e:
+    print(e)
 
 def show_usage():
     usage = """
@@ -61,10 +71,6 @@ async def run(loop):
         print(f"Connected to NATS at {nc.connected_url.netloc}...")
 
     async def subscribe_handler(msg):
-
-        conn = psycopg2.connect(host="172.17.0.1", database="st-chat", port=5432, user="st-chat", password="1qaz2wsx")
-        cursor = conn.cursor()
-
         if args.subject == "sport_event":
             deser_msg = event_pb2.event()
             deser_msg.ParseFromString(msg.data)
@@ -76,8 +82,8 @@ async def run(loop):
             print("Message: {sport} | {match_title} | {data_event}".format(
                 sport=sport, match_title=match_title, data_event=data_event))
             
-            INSERT = '''INSERT INTO sport_event (timestamp, sport, match_title, data_event) VALUES (%s, %s, %s, %s);'''
-            cursor.execute(INSERT, (str(int(time.time())), sport, match_title, data_event))
+            db.insert(PostgresManager.INSERT_EVENT,
+                (str(int(time.time())), sport, match_title, data_event))
 
         if args.subject == "execution":
             deser_msg = execution_pb2.execution()
@@ -88,13 +94,9 @@ async def run(loop):
                 quantity=deser_msg.quantity, executionEpoch=deser_msg.executionEpoch, 
                 stateSymbol=deser_msg.stateSymbol))
 
-            INSERT = '''INSERT INTO execution (timestamp, symbol, market, price, quantity, executionEpoch, stateSymbol) VALUES (%s, %s, %s, %s, %s, %s, %s);'''
-            cursor.execute(INSERT, (str(int(time.time())), deser_msg.symbol, deser_msg.market, str(deser_msg.price),
-                str(deser_msg.quantity), str(deser_msg.executionEpoch), deser_msg.stateSymbol))
-
-        conn.commit()
-        cursor.close()
-        conn.close()        
+            db.insert(PostgresManager.INSERT_EXECUTION,
+                (str(int(time.time())), deser_msg.symbol, deser_msg.market, str(deser_msg.price),
+                 str(deser_msg.quantity), str(deser_msg.executionEpoch), deser_msg.stateSymbol))
 
     options = {
         "loop": loop,

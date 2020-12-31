@@ -9,7 +9,9 @@ class PostgresManager(object):
 
     # "static" query strings. 
     INSERT_CHAT = '''INSERT INTO chat_log (timestamp, username, action, message) VALUES (%s, %s, %s, %s);'''
-
+    INSERT_EVENT = '''INSERT INTO sport_event (timestamp, sport, match_title, data_event) VALUES (%s, %s, %s, %s);'''
+    INSERT_EXECUTION = '''INSERT INTO execution (timestamp, symbol, market, price, quantity, executionEpoch, stateSymbol) VALUES (%s, %s, %s, %s, %s, %s, %s);'''
+  
     # Takes ConfigurationManager cm as argument. 
     # Initializes Postgres config section and connects to database. 
     def __init__(self, cm):
@@ -37,15 +39,16 @@ class PostgresManager(object):
         except Exception:
             raise
 
-    # Execute "INSERT_CHAT" query using args_list
-    def insert_chat(self, args_list):
+    # Execute query using args_list
+    def insert(self, query, args_list):
         try:
-            self.cursor.execute(PostgresManager.INSERT_CHAT, args_list)
+            self.cursor.execute(query, args_list)
             self.conn.commit()
         except:
             self.check_connection()
             raise
 
+    # Check connection and handle retries. 
     # Check connection and handle retries. 
     def check_connection(self):
         if self.conn is None or self.cursor is None:
