@@ -17,7 +17,10 @@ ACTION_EXIT = "exit"
 
 # Initialize config and database managers.
 cm = ConfigManager()
-db = PostgresManager(cm)
+try:
+    db = PostgresManager(cm)
+except Exception as e:
+    print(e)
 
 # Initialize set to track websocket connections, "users"
 USERS = set()

@@ -2,7 +2,7 @@ import copy
 import psycopg2
 
 # Database connection manager class. 
-class PostgresManager:
+class PostgresManager(object):
 
     # "static" value represents config section for this class. 
     section = "Postgres"
@@ -14,8 +14,10 @@ class PostgresManager:
     # Initializes Postgres config section and connects to database. 
     def __init__(self, cm):
         self.cm = copy.deepcopy(cm)
+        self.conn = None
+        self.cursor = None
         self.set_config()
-        self.connect()
+        self.check_connection()
 
     # Get [Postgres] section from config.ini and set as self.config. 
     def set_config(self):
@@ -38,28 +40,28 @@ class PostgresManager:
     # Execute "INSERT_CHAT" query using args_list
     def insert_chat(self, args_list):
         try:
-            self.check_connection() 
             self.cursor.execute(PostgresManager.INSERT_CHAT, args_list)
             self.conn.commit()
         except:
+            self.check_connection()
             raise
 
     # Check connection and handle retries. 
     def check_connection(self):
-        if self.conn is None:
-            print("No database connection... attempting to reconnect.")
+        if self.conn is None or self.cursor is None:
+            print("No database connection... attempting to connect.")
             try:
                 retries = self.config['retries']
-                for i in range(1,retries):
-                    print("Retry attempt {retry}...".format(retry=i))
-                    self.conn = self.connect()
-                    if self.conn is None:
-                        print("Retry attempt {retry} failed...".format(retry=i))
+                for i in range(0,int(retries)):
+                    display_retry = i+1
+                    try:
+                        self.connect()
+                        print("Successfully connected!")
+                        return
+                    except: 
+                        print("Retry attempt {retry} failed...".format(retry=display_retry))
                         continue
-                    else:
-                        print("Successfully reconnected!")
-                        break;
-                raise Exception("Lost database connection and attempted {n} retries... Failed to reconnect."
+                raise Exception("Failed to reconnect."
                     .format(n=retries))
             except:
                 raise
