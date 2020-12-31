@@ -62,13 +62,13 @@
                 websocket.onmessage = function (event) {
                     data = JSON.parse(event.data);
                     switch (data.action) {
-                        case 'user_join':
+                        case 'join': 
                             $("#chatbox").prepend($("<div/>").text("New user joined!"));
                             break;
-                        case 'user_exit':
+                        case 'message':
                             $("#chatbox").prepend($("<div/>").text("User exited..."));
                             break;
-                        case 'new_message':
+                        case 'exit':
                             $("#chatbox").prepend($("<div/>").text(data.message));
                             break;
                         default:

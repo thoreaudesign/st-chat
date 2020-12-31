@@ -4,17 +4,29 @@ import asyncio
 import json
 import websockets
 
+from enum import Enum
+
+from lib.PostgresManager import PostgresManager
+from lib.ConfigManager import ConfigManager
+
+ACTION_JOIN = "join"
+ACTION_MESSAGE = "message"
+ACTION_EXIT = "exit"
+
+conf = ConfigManager()
+db = PostgresManager(conf)
+
 USERS = set()
 
 def user_join_msg():
-    return json.dumps({"action": "user_join"})
+    return json.dumps({"action": ACTION_JOIN})
 
 def user_exit_msg():
-    return json.dumps({"action": "user_exit"})
+    return json.dumps({"action": ACTION_EXIT})
 
 async def distribute_message(message):
     if USERS:  
-        new_message = json.dumps({"action": "new_message", "message": message})
+        new_message = json.dumps({"action": ACTION_MESSAGE, "message": message})
         await asyncio.wait([user.send(new_message) for user in USERS])
 
 async def notify_user_exit():
