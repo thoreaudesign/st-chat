@@ -1,4 +1,3 @@
-import copy
 import psycopg2
 
 # Database connection manager class. 
@@ -15,19 +14,10 @@ class PostgresManager(object):
     # Takes ConfigurationManager cm as argument. 
     # Initializes Postgres config section and connects to database. 
     def __init__(self, cm):
-        self.cm = copy.deepcopy(cm)
         self.conn = None
         self.cursor = None
-        self.set_config()
+        self.config = cm.get_config(PostgresManager.section)
         self.check_connection()
-
-    # Get [Postgres] section from config.ini and set as self.config. 
-    def set_config(self):
-        if PostgresManager.section in self.cm.parser.sections():
-            self.config = self.cm.parser[PostgresManager.section]
-        else:
-            raise Exception("Invalid configuration file at {config_path}. Missing section '{section}.'"
-                .format(config_path=self.cm.parser.path, section=PostgresManager.section))
 
     # Connect to database using config values. Set cursor for executing Postgres queries. 
     def connect(self):

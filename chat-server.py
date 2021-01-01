@@ -3,17 +3,21 @@
 import asyncio
 import json
 import websockets
+import time
+import names
+import pickle
 
 from lib.PostgresManager import PostgresManager
 from lib.ConfigManager import ConfigManager
-
-import time
 
 # Enum emulation. 
 # True Enum type doesn't support string values by default.
 ACTION_JOIN = "join"
 ACTION_MESSAGE = "message"
 ACTION_EXIT = "exit"
+
+# Set of open websocket connections
+WEBSOCKETS = set()
 
 # Initialize config and database managers.
 cm = ConfigManager()
@@ -22,22 +26,56 @@ try:
 except Exception as e:
     print(e)
 
-# Initialize set to track websocket connections, "users"
-USERS = set()
+# "Main" function to run in event loop. 
+# Handles user management and message distribution. 
+async def chat(websocket, path):
+    # Randomly generated user name. 
+    username = names.get_full_name()
+    await user_change(username, websocket, ACTION_JOIN)
+    try:
+        async for message in websocket:
+            data = json.loads(message)
+            if data["message"] is not None:
+                await notify_users(username, ACTION_MESSAGE, data["message"])
+            else:
+                print("Unsupported event: {data}".format(data=data))
+    finally:
+        await user_change(username, websocket, ACTION_EXIT)
+
+# Handles connection and disconnection of users. 
+async def user_change(username, websocket, action):
+    message = toggle_connection(username, websocket, action)
+    await notify_users(username, action, message)
+
+# Adds or removes websocket from "users" set. 
+# Returns the appropriate message to inform the users.
+def toggle_connection(username, websocket, action):
+    if action is ACTION_JOIN:
+        WEBSOCKETS.add(websocket)
+        return user_msg_join(username)
+
+    if action is ACTION_EXIT:
+        WEBSOCKETS.remove(websocket)
+        return user_msg_exit(username)
+
+# Distributes messages to all connected users. 
+# No action if there are no connected users. 
+async def notify_users(username, action, message):
+    if WEBSOCKETS:
+        if action is ACTION_MESSAGE:
+            message = "{username}: {message}".format(username=username, message=message)
+        payload = get_payload(ACTION_MESSAGE, message)
+        print(message)
+        log_message((get_epoch_str(), username, ACTION_MESSAGE, message))
+        await asyncio.wait([websocket.send(payload) for websocket in WEBSOCKETS])
 
 # Configuration file management
 def get_config():
-    section = "Websocket"
-    if section in cm.parser.sections():
-        return cm.parser[section]
-
+    return cm.get_config("Websocket")
 
 # Return epoch timestamp as string. 
 def get_epoch_str():
     return str(int(time.time()))
-
-def notification_payload(action):
-    return json.dumps({"action": action})
 
 # Write chat data to Postgres database. 
 def log_message(attr_list):
@@ -45,51 +83,15 @@ def log_message(attr_list):
         db.insert(PostgresManager.INSERT_CHAT, attr_list)
     except Exception as e:
         print(e)
-    
-# Distributes messages to all connected users. 
-# No action if there are no connected users. 
-async def notify_users(action, message):
-    if USERS:
-        payload = None
-        if action is ACTION_MESSAGE:
-            username = message.split(':')[0]
-            payload = json.dumps({"action": ACTION_MESSAGE, "message": message})
-            print(message)
-            log_message((get_epoch_str(), username, ACTION_MESSAGE, message))
-        else:
-            payload = notification_payload(action)
-        
-        await asyncio.wait([user.send(payload) for user in USERS])
 
-# Adds or removes websocket from "users" set
-def toggle_connection(action, websocket):
-    if action is ACTION_JOIN:
-        USERS.add(websocket)
+def get_payload(action, message):
+    return json.dumps({"action": ACTION_MESSAGE, "message": message})
 
-    if action is ACTION_EXIT:
-        USERS.remove(websocket)
+def user_msg_join(username):
+    return username + " joined chat."
 
-# Handles connection and disconnection of users. 
-async def user_change(websocket, action, message):
-    username = action
-    toggle_connection(action, websocket)
-    print(message)
-    log_message((get_epoch_str(), username, action, message))
-    await notify_users(action, message)
-
-# "Main" function to run in event loop. 
-# Handles user management and message distribution. 
-async def chat(websocket, path):
-    await user_change(websocket, ACTION_JOIN, "New user joined chat.")
-    try:
-        async for message in websocket:
-            data = json.loads(message)
-            if data["message"] is not None:
-                await notify_users(ACTION_MESSAGE, data["message"])
-            else:
-                print("Unsupported event: {data}".format(data=data))
-    finally:
-        await user_change(websocket, ACTION_EXIT, "User exited...")
+def user_msg_exit(username):
+    return username + " exited chat."
 
 # Initialize config values from config.ini
 config = get_config()
