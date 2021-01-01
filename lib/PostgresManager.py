@@ -1,4 +1,3 @@
-import copy
 import psycopg2
 
 # Database connection manager class. 
@@ -15,7 +14,7 @@ class PostgresManager(object):
     # Takes ConfigurationManager cm as argument. 
     # Initializes Postgres config section and connects to database. 
     def __init__(self, cm):
-        self.cm = copy.deepcopy(cm)
+        self.cm = cm
         self.conn = None
         self.cursor = None
         self.set_config()
