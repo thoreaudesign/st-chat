@@ -48,11 +48,9 @@
 
                 websocket = new WebSocket("ws://localhost:8888/");
 
-                var username = makeid(8);
-
                 $('#message').keydown(function(event) {
                     if(event.keyCode == '13') {
-                        var message = username + ": " + $("#message").val();
+                        var message = $("#message").val();
 
                         websocket.send(JSON.stringify({'message': message}));
 
@@ -63,13 +61,9 @@
                     data = JSON.parse(event.data);
                     switch (data.action) {
                         case 'join': 
-                            $("#chatbox").prepend($("<div/>").text("New user joined!"));
-                            break;
                         case 'message':
-                            $("#chatbox").prepend($("<div/>").text(data.message));
-                            break;
                         case 'exit':
-                            $("#chatbox").prepend($("<div/>").text("User exited..."));
+                            $("#chatbox").prepend($("<div/>").text(data.message));
                             break;
                         default:
                             console.error(
