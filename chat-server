@@ -2,13 +2,13 @@
 
 import asyncio
 import json
-import websockets
 import time
-import names
-import pickle
+import websockets
 
-from lib.PostgresManager import PostgresManager
+import names
+
 from lib.ConfigManager import ConfigManager
+from lib.PostgresManager import PostgresManager
 
 # Enum emulation. 
 # True Enum type doesn't support string values by default.

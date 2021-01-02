@@ -1,3 +1,6 @@
+
+#!/usr/bin/env python
+
 # Copyright 2016-2018 The NATS Authors
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,22 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-import argparse, sys
+import argparse
 import asyncio
 import os
 import signal
-from nats.aio.client import Client as NATS
-
+import sys
 import time
+
+from nats.aio.client import Client as NATS
+import psycopg2
 
 from pb2 import event_pb2
 from pb2 import execution_pb2
-
 from lib.ConfigManager import ConfigManager
 from lib.PostgresManager import PostgresManager
-
-import psycopg2
 
 # Initialize config and database managers.
 cm = ConfigManager()
