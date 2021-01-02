@@ -109,7 +109,7 @@ Accept-Ranges: bytes
 ```
 
 ## Postgres
-Both nat-sub and the nginx container write to the postgres container for persistent storage. Commands to view the data stored in Postgres for each utility are below. 
+Both nat-sub and nginx containers write to the postgres container for persistent storage. Commands to view the data stored in Postgres for each utility are below. 
 
 ```
 # Connect to postgres
