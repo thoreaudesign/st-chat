@@ -18,23 +18,47 @@ The installation commands below assume the procedure is taking place on a linux 
 # Clone repository
 git clone git@github.com:thoreaudesign/st-chat.git
 
-# Launch containers, including NATS broker and feeds
+# Launch containers. 
+# Containers include NATS broker, feeds, nginx for chat, and postgres for persistent storage. 
 cd st-chat 
 docker-compose up -d
-
-# Install python dependencies using virtualenv
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
 ```
 
 ## Running nats-sub
 The nats-sub script subscribes to the NATS broker, parses the messages (protobufs) sent by the two preconfigured subscribers, then stores each message in persistent storage. 
 
 ```
-# The IP 172.17.0.1 is the gateway IP address of the docker network. This IP should be standard across docker installations. 
-# If that IP does not work, use `docker inspect network st-chat_internal` to obtain the IP address assigned to the NATS broker container.  
+# Install python dependencies using virtualenv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-python3 nats-sub sport_event -s nats://172.17.0.1:4222
-python3 nats-sub execution -s nats://172.17.0.1:4222
+# Use get-ip.py to get IP addresses for the containers:
+>python3 get-ip.py
+nats:
+ - 172.22.0.3
+postgres:
+ - 172.22.0.4
+sports:
+ - 172.22.0.6
+nginx:
+ - 172.22.0.2
+executions:
+ - 172.22.0.5
+Gateway(s):
+  - 172.22.0.1
+ 
+# Update config.ini to use the postgres container IP above. Save.
+[Postgres]
+host = 172.22.0.4
+name = st-chat
+user = st-chat
+port = 5432
+pass = 1qaz2wsx
+retries = 3
+
+# Run nats-sub.py
+# Use the Gateway IP above for the nats server: 
+python3 nats-sub.py sport_event -s nats://172.22.0.1:4222
+python3 nats-sub execution -s nats://172.22.0.1:4222
 ```
